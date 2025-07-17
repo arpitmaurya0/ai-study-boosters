@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Study Boosters</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #E6F5FA;
+            color: #003F5C;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .ai-button {
+            background-color: #366E8A;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .ai-button:hover {
+            background-color: #003F5C;
+        }
+        .ai-output {
+            background-color: #E6F5FA;
+            border: 1px solid #A8CAD9;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: #003F5C;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .ai-output.loading {
+            font-style: italic;
+            color: #6B9DB3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-2">✨ AI-Powered Study Boosters ✨</h1>
+            <p class="text-lg text-[#366E8A]">Leverage AI to get instant interview questions, communication scenarios, and personalized study tips to supercharge your preparation.</p>
+        </header>
+
+        <section id="ai-features" class="mb-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="text-2xl font-bold mb-4">✨ Interview Question Generator</h3>
+                    <p class="text-[#366E8A] mb-4">Select a subject and get a common interview question to practice your knowledge.</p>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                        <select id="subjectSelect" class="p-2 border border-[#A8CAD9] rounded-md flex-1">
+                            <option value="DSA">Data Structures & Algorithms</option>
+                            <option value="DBMS">DBMS</option>
+                            <option value="CN">Computer Networks</option>
+                            <option value="Web Development">Web Development (JavaScript)</option>
+                            <option value="OOPs">OOPs</option>
+                        </select>
+                        <button id="generateQuestionBtn" class="ai-button">Generate Question</button>
+                    </div>
+                    <div id="interviewQuestionOutput" class="ai-output">Your interview question will appear here.</div>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-2xl font-bold mb-4">✨ Communication Scenario</h3>
+                    <p class="text-[#366E8A] mb-4">Get a realistic communication scenario to practice your soft skills for interviews or group discussions.</p>
+                    <button id="generateScenarioBtn" class="ai-button w-full mb-4">Generate Scenario</button>
+                    <div id="communicationScenarioOutput" class="ai-output">Your communication scenario will appear here.</div>
+                </div>
+
+                <div class="card md:col-span-2">
+                    <h3 class="text-2xl font-bold mb-4">✨ Personalized Study Tip/Motivation</h3>
+                    <p class="text-[#366E8A] mb-4">Tell me what you're struggling with or need motivation for, and get a tailored tip or encouraging message.</p>
+                    <textarea id="studyChallengeInput" class="w-full p-2 border border-[#A8CAD9] rounded-md mb-4" rows="3" placeholder="e.g., 'I'm feeling burnt out', 'Struggling with Linked List problems', 'How to stay motivated?'"></textarea>
+                    <button id="getStudyTipBtn" class="ai-button w-full mb-4">Get Tip/Motivation</button>
+                    <div id="studyTipOutput" class="ai-output">Your personalized tip or motivational message will appear here.</div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center pt-8 border-t border-[#A8CAD9] mt-16">
+            <p class="text-[#366E8A]">Powered by Gemini API</p>
+        </footer>
+
+    </div>
+
+    <script>
+        async function callGeminiAPI(prompt, outputElementId) {
+            const outputElement = document.getElementById(outputElementId);
+            outputElement.innerHTML = 'Thinking...';
+            outputElement.classList.add('loading');
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = "AIzaSyBs6AWaddP__wFKhDF7JYGRcFVdIbJd-vE";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    outputElement.innerHTML = text;
+                } else {
+                    outputElement.innerHTML = 'Could not generate response. Please try again.';
+                }
+            } catch (error) {
+                outputElement.innerHTML = 'Error: ' + error.message;
+            } finally {
+                outputElement.classList.remove('loading');
+            }
+        }
+
+        document.getElementById('generateQuestionBtn').addEventListener('click', () => {
+            const subject = document.getElementById('subjectSelect').value;
+            const prompt = `Generate a common technical interview question for a service-based company for a B.Tech student on the topic of ${subject}. Keep it concise.`;
+            callGeminiAPI(prompt, 'interviewQuestionOutput');
+        });
+
+        document.getElementById('generateScenarioBtn').addEventListener('click', () => {
+            const prompt = `Generate a short communication practice scenario for a B.Tech student preparing for service-based company placements. Focus on a common interview or group discussion situation.`;
+            callGeminiAPI(prompt, 'communicationScenarioOutput');
+        });
+
+        document.getElementById('getStudyTipBtn').addEventListener('click', () => {
+            const challenge = document.getElementById('studyChallengeInput').value;
+            if (challenge.trim() === '') {
+                document.getElementById('studyTipOutput').innerHTML = 'Please describe your challenge first!';
+                return;
+            }
+            const prompt = `Given the user's challenge: '${challenge}', provide a concise and actionable study tip or motivational message for a B.Tech student preparing for service-based company placements.`;
+            callGeminiAPI(prompt, 'studyTipOutput');
+        });
+    </script>
+</body>
+</html>
