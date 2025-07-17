@@ -51,6 +51,78 @@
             font-style: italic;
             color: #6B9DB3;
         }
+        /* Specific styling for MCQ content within ai-output */
+        #interviewQuestionOutput {
+            text-align: left; /* Override center alignment for MCQ content */
+            display: block; /* Ensure it behaves like a block for proper text flow */
+        }
+        .mcq-question-container {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px dashed #A8CAD9;
+        }
+        .mcq-question-container:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .mcq-options label {
+            display: flex;
+            align-items: flex-start; /* Align text to top if options wrap */
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+        .mcq-options input[type="radio"] {
+            margin-top: 0.25rem; /* Align radio button with text */
+            margin-right: 0.5rem;
+            flex-shrink: 0; /* Prevent radio button from shrinking */
+        }
+        .question-result {
+            margin-top: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            display: none; /* Hidden by default */
+        }
+        .question-result.correct {
+            background-color: #D1FAE5; /* Green light */
+            color: #065F46; /* Green dark */
+        }
+        .question-result.incorrect {
+            background-color: #FEE2E2; /* Red light */
+            color: #991B1B; /* Red dark */
+        }
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #003F5C;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .timer-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .timer-controls button {
+            background-color: #6B9DB3;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            margin: 0;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .timer-controls button:hover {
+            background-color: #366E8A;
+        }
+        .timer-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -59,32 +131,83 @@
 
         <header class="text-center mb-12">
             <h1 class="text-4xl md:text-5xl font-extrabold mb-2">✨ AI-Powered Study Boosters ✨</h1>
-            <p class="text-lg text-[#366E8A]">Leverage AI to get instant interview questions, communication scenarios, and personalized study tips to supercharge your preparation.</p>
+            <p class="text-lg text-[#366E8A]">Leverage AI to get instant interview questions and personalized study tips to supercharge your preparation.</p>
+            
+            <!-- Timer Section -->
+            <div class="timer-display-container" style="text-align: center; margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="timer-display" id="timerDisplay">00:00:00</div>
+            </div>
+            <div class="timer-controls mb-8">
+                <button id="startTimerBtn">Start</button>
+                <button id="pauseTimerBtn">Pause</button>
+                <button id="resetTimerBtn">Reset</button>
+                <button id="music-control" class="ai-button">Play Music</button>
+            </div>
+            <!-- End Timer Section -->
+
+            <!-- Hidden YouTube Player Container -->
+            <div id="youtube-player" style="display:none;"></div>
+
+            <!-- Load YouTube IFrame API -->
+            <script src="https://www.youtube.com/iframe_api"></script>
+            
+            <script>
+                // YouTube Player functionality
+                let player;
+                function onYouTubeIframeAPIReady() {
+                    player = new YT.Player('youtube-player', {
+                        height: '0',
+                        width: '0',
+                        videoId: 'jfKfPfyJRdk', // Your live stream ID
+                        playerVars: {
+                            autoplay: 0, // Do not autoplay on load
+                            mute: 1, // Start muted (required for autoplay)
+                            controls: 0, // Hide controls
+                            modestbranding: 1,
+                            rel: 0,
+                        },
+                        events: {
+                            onReady: (event) => {
+                                // Do not autoplay on ready
+                            }
+                        }
+                    });
+                }
+
+                // Play/Stop button logic
+                document.getElementById('music-control').addEventListener('click', () => {
+                    if (!player) return;
+                    if (player.isMuted()) {
+                        player.unMute(); // Unmute audio
+                        player.playVideo();
+                        document.getElementById('music-control').textContent = 'Stop Music';
+                    } else {
+                        player.pauseVideo();
+                        player.mute(); // Mute audio
+                        document.getElementById('music-control').textContent = 'Play Music';
+                    }
+                });
+            </script>
+
         </header>
 
         <section id="ai-features" class="mb-16">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="card">
+                <div class="card md:col-span-2">
                     <h3 class="text-2xl font-bold mb-4">✨ Interview Question Generator</h3>
-                    <p class="text-[#366E8A] mb-4">Select a subject and get a common interview question to practice your knowledge.</p>
+                    <p class="text-[#366E8A] mb-4">Select a subject and get 5 common interview questions to practice your knowledge.</p>
                     <div class="flex flex-col sm:flex-row gap-4 mb-4">
                         <select id="subjectSelect" class="p-2 border border-[#A8CAD9] rounded-md flex-1">
                             <option value="DSA">Data Structures & Algorithms</option>
                             <option value="DBMS">DBMS</option>
                             <option value="CN">Computer Networks</option>
-                            <option value="Web Development">Web Development (JavaScript)</option>
+                            <option value="Aptitude">Aptitude</option>
+                            <option value="Verbal (Grammar)">Verbal (Grammar)</option>
                             <option value="OOPs">OOPs</option>
                         </select>
-                        <button id="generateQuestionBtn" class="ai-button">Generate Question</button>
+                        <button id="generateQuestionBtn" class="ai-button">Generate Questions</button>
                     </div>
-                    <div id="interviewQuestionOutput" class="ai-output">Your interview question will appear here.</div>
-                </div>
-
-                <div class="card">
-                    <h3 class="text-2xl font-bold mb-4">✨ Communication Scenario</h3>
-                    <p class="text-[#366E8A] mb-4">Get a realistic communication scenario to practice your soft skills for interviews or group discussions.</p>
-                    <button id="generateScenarioBtn" class="ai-button w-full mb-4">Generate Scenario</button>
-                    <div id="communicationScenarioOutput" class="ai-output">Your communication scenario will appear here.</div>
+                    <div id="interviewQuestionOutput" class="ai-output">Your interview questions will appear here.</div>
                 </div>
 
                 <div class="card md:col-span-2">
@@ -104,14 +227,24 @@
     </div>
 
     <script>
-        async function callGeminiAPI(prompt, outputElementId) {
+        async function callGeminiAPI(prompt, outputElementId, schema = null) {
             const outputElement = document.getElementById(outputElementId);
-            outputElement.innerHTML = 'Thinking...';
-            outputElement.classList.add('loading');
+            if (outputElementId === 'interviewQuestionOutput' || outputElementId === 'studyTipOutput') {
+                outputElement.innerHTML = 'Thinking...';
+                outputElement.classList.add('loading');
+            }
 
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
             const payload = { contents: chatHistory };
+            if (schema) {
+                payload.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                };
+            }
+
             const apiKey = "AIzaSyBs6AWaddP__wFKhDF7JYGRcFVdIbJd-vE";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -122,30 +255,131 @@
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
+
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                     const text = result.candidates[0].content.parts[0].text;
-                    outputElement.innerHTML = text;
+                    if (schema) {
+                        return JSON.parse(text);
+                    } else {
+                        return text;
+                    }
                 } else {
                     outputElement.innerHTML = 'Could not generate response. Please try again.';
+                    return null;
                 }
             } catch (error) {
                 outputElement.innerHTML = 'Error: ' + error.message;
+                console.error("Gemini API Error:", error);
+                return null;
             } finally {
-                outputElement.classList.remove('loading');
+                if (outputElementId === 'interviewQuestionOutput' || outputElementId === 'studyTipOutput') {
+                    outputElement.classList.remove('loading');
+                }
             }
         }
 
-        document.getElementById('generateQuestionBtn').addEventListener('click', () => {
+        document.getElementById('generateQuestionBtn').addEventListener('click', async () => {
             const subject = document.getElementById('subjectSelect').value;
-            const prompt = `Generate a common technical interview question for a service-based company for a B.Tech student on the topic of ${subject}. Keep it concise.`;
-            callGeminiAPI(prompt, 'interviewQuestionOutput');
-        });
+            const outputElement = document.getElementById('interviewQuestionOutput');
+            outputElement.innerHTML = 'Thinking...';
+            outputElement.classList.add('loading');
 
-        document.getElementById('generateScenarioBtn').addEventListener('click', () => {
-            const prompt = `Generate a short communication practice scenario for a B.Tech student preparing for service-based company placements. Focus on a common interview or group discussion situation.`;
-            callGeminiAPI(prompt, 'communicationScenarioOutput');
+            let prompt;
+            if (subject === "Aptitude") {
+                prompt = `Generate 5 multiple-choice questions for a technical interview at a service-based company (like TCS, Wipro, Accenture) for a B.Tech student on the topic of Quantitative Aptitude. Each question should have exactly 4 options. For each question, indicate the correct answer index (0-3). The questions should be clear and concise. Provide the output as a JSON array of objects, where each object has 'question', 'options' (an array of 4 strings), and 'correctAnswerIndex' (a number).`;
+            } else if (subject === "Verbal (Grammar)") {
+                prompt = `Generate 5 multiple-choice questions for a technical interview at a service-based company (like TCS, Wipro, Accenture) for a B.Tech student on the topic of English Grammar. Each question should have exactly 4 options. For each question, indicate the correct answer index (0-3). The questions should be clear and concise. Provide the output as a JSON array of objects, where each object has 'question', 'options' (an array of 4 strings), and 'correctAnswerIndex' (a number).`;
+            } else {
+                prompt = `Generate 5 multiple-choice questions for a technical interview at a service-based company for a B.Tech student on the topic of ${subject}. Each question should have exactly 4 options. For each question, indicate the correct answer index (0-3). The questions should be clear and concise. Provide the output as a JSON array of objects, where each object has 'question', 'options' (an array of 4 strings), and 'correctAnswerIndex' (a number).`;
+            }
+
+            const mcqSchema = {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        "question": { "type": "STRING" },
+                        "options": {
+                            "type": "ARRAY",
+                            "items": { "type": "STRING" },
+                            "minItems": 4,
+                            "maxItems": 4
+                        },
+                        "correctAnswerIndex": { "type": "NUMBER" }
+                    },
+                    required: ["question", "options", "correctAnswerIndex"]
+                },
+                minItems: 5,
+                maxItems: 5
+            };
+
+            const mcqData = await callGeminiAPI(prompt, 'interviewQuestionOutput', mcqSchema);
+
+            if (mcqData && mcqData.length === 5) {
+                let mcqHtml = '';
+                mcqData.forEach((mcq, qIndex) => {
+                    mcqHtml += `
+                        <div class="mcq-question-container" data-correct-answer-index="${mcq.correctAnswerIndex}" data-question-index="${qIndex}">
+                            <p class="font-semibold text-left mb-3">Q${qIndex + 1}: ${mcq.question}</p>
+                            <div class="space-y-2 text-left mcq-options">
+                    `;
+                    mcq.options.forEach((option, oIndex) => {
+                        mcqHtml += `
+                                <label class="flex items-center">
+                                    <input type="radio" name="mcqOption_${qIndex}" value="${oIndex}" class="mr-2 text-[#366E8A] focus:ring-[#366E8A]">
+                                    <span>${option}</span>
+                                </label>
+                        `;
+                    });
+                    mcqHtml += `
+                            </div>
+                            <div id="mcqResult_${qIndex}" class="question-result"></div>
+                        </div>
+                    `;
+                });
+                mcqHtml += `<button id="submitAllAnswersBtn" class="ai-button mt-6 w-full">Submit All Answers</button>`;
+                outputElement.innerHTML = mcqHtml;
+                outputElement.classList.remove('loading');
+
+                document.getElementById('submitAllAnswersBtn').addEventListener('click', () => {
+                    let allCorrect = true;
+                    mcqData.forEach((mcq, qIndex) => {
+                        const selectedOption = document.querySelector(`input[name="mcqOption_${qIndex}"]:checked`);
+                        const questionResultDiv = document.getElementById(`mcqResult_${qIndex}`);
+                        questionResultDiv.style.display = 'block';
+
+                        if (selectedOption) {
+                            const userAnswerIndex = parseInt(selectedOption.value);
+                            const correctAnswerIndex = mcq.correctAnswerIndex;
+                            const correctAnswerText = mcq.options[correctAnswerIndex];
+
+                            if (userAnswerIndex === correctAnswerIndex) {
+                                questionResultDiv.innerHTML = 'Correct! 🎉';
+                                questionResultDiv.className = 'question-result correct';
+                            } else {
+                                questionResultDiv.innerHTML = `Incorrect. The correct answer was: <span class="font-bold">${correctAnswerText}</span>`;
+                                questionResultDiv.className = 'question-result incorrect';
+                                allCorrect = false;
+                            }
+                        } else {
+                            questionResultDiv.innerHTML = 'No answer selected.';
+                            questionResultDiv.className = 'question-result incorrect';
+                            allCorrect = false;
+                        }
+
+                        document.querySelectorAll(`input[name="mcqOption_${qIndex}"]`).forEach(radio => radio.disabled = true);
+                    });
+
+                    document.getElementById('submitAllAnswersBtn').disabled = true;
+                    document.getElementById('submitAllAnswersBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                });
+
+            } else {
+                outputElement.innerHTML = 'Could not generate 5 questions. Please try again.';
+                outputElement.classList.remove('loading');
+            }
         });
 
         document.getElementById('getStudyTipBtn').addEventListener('click', () => {
@@ -157,6 +391,59 @@
             const prompt = `Given the user's challenge: '${challenge}', provide a concise and actionable study tip or motivational message for a B.Tech student preparing for service-based company placements.`;
             callGeminiAPI(prompt, 'studyTipOutput');
         });
+
+        // Timer functionality
+        let timerInterval;
+        let elapsedTime = 0; // Changed from timeLeft to elapsedTime
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startTimerBtn = document.getElementById('startTimerBtn');
+        const pauseTimerBtn = document.getElementById('pauseTimerBtn');
+        const resetTimerBtn = document.getElementById('resetTimerBtn');
+
+        function formatTime(totalSeconds) { // Updated to format for H:M:S
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimerDisplay() {
+            timerDisplay.textContent = formatTime(elapsedTime);
+        }
+
+        function startTimer() {
+            if (timerInterval) return; // Prevent multiple intervals
+            timerInterval = setInterval(() => {
+                elapsedTime++; // Increment elapsed time
+                updateTimerDisplay();
+            }, 1000);
+            startTimerBtn.disabled = true;
+            pauseTimerBtn.disabled = false;
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            startTimerBtn.disabled = false;
+            pauseTimerBtn.disabled = true;
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            elapsedTime = 0; // Reset elapsed time
+            updateTimerDisplay();
+            startTimerBtn.disabled = false;
+            pauseTimerBtn.disabled = true;
+        }
+
+        startTimerBtn.addEventListener('click', startTimer);
+        pauseTimerBtn.addEventListener('click', pauseTimer);
+        resetTimerBtn.addEventListener('click', resetTimer);
+
+        // Initial display
+        updateTimerDisplay();
+        pauseTimerBtn.disabled = true; // Pause button disabled initially
     </script>
 </body>
 </html>
