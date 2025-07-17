@@ -196,17 +196,22 @@
                 <div class="card md:col-span-2">
                     <h3 class="text-2xl font-bold mb-4">✨ Interview Question Generator</h3>
                     <p class="text-[#366E8A] mb-4">Select a subject and get 5 common interview questions to practice your knowledge.</p>
-                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
-                        <select id="subjectSelect" class="p-2 border border-[#A8CAD9] rounded-md flex-1">
-                            <option value="DSA">Data Structures & Algorithms</option>
-                            <option value="DBMS">DBMS</option>
-                            <option value="CN">Computer Networks</option>
-                            <option value="Aptitude">Aptitude</option>
-                            <option value="Verbal (Grammar)">Verbal (Grammar)</option>
-                            <option value="OOPs">OOPs</option>
-                        </select>
-                        <button id="generateQuestionBtn" class="ai-button">Generate Questions</button>
-                    </div>
+<div class="flex flex-col sm:flex-row gap-4 mb-4 justify-between">
+    <select id="subjectSelect" class="p-1 text-sm border border-[#A8CAD9] rounded-md flex-1 max-w-xs">
+        <option value="DSA">Data Structures & Algorithms</option>
+        <option value="DBMS">DBMS</option>
+        <option value="CN">Computer Networks</option>
+        <option value="Aptitude">Aptitude</option>
+        <option value="Verbal (Grammar)">Verbal (Grammar)</option>
+        <option value="OOPs">OOPs</option>
+    </select>
+    <select id="difficultySelect" class="p-1 text-sm border border-[#A8CAD9] rounded-md max-w-xs">
+        <option value="Easy">Easy</option>
+        <option value="Medium">Medium</option>
+        <option value="Normal">Normal</option>
+    </select>
+    <button id="generateQuestionBtn" class="ai-button">Generate Questions</button>
+</div>
                     <div id="interviewQuestionOutput" class="ai-output">Your interview questions will appear here.</div>
                 </div>
 
