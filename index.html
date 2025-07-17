@@ -197,14 +197,8 @@
                     <h3 class="text-2xl font-bold mb-4">✨ Interview Question Generator</h3>
                     <p class="text-[#366E8A] mb-4">Select a subject and get 5 common interview questions to practice your knowledge.</p>
 <div class="flex flex-col sm:flex-row gap-4 mb-4 justify-between">
-    <select id="subjectSelect" class="p-1 text-sm border border-[#A8CAD9] rounded-md flex-1 max-w-xs">
-        <option value="DSA">Data Structures & Algorithms</option>
-        <option value="DBMS">DBMS</option>
-        <option value="CN">Computer Networks</option>
-        <option value="Aptitude">Aptitude</option>
-        <option value="Verbal (Grammar)">Verbal (Grammar)</option>
-        <option value="OOPs">OOPs</option>
-    </select>
+    <input id="subjectInput" type="text" placeholder="Enter subject" class="p-1 text-sm border border-[#A8CAD9] rounded-md flex-1 max-w-xs" />
+    <input id="topicInput" type="text" placeholder="Enter topic" class="p-1 text-sm border border-[#A8CAD9] rounded-md flex-1 max-w-xs" />
     <select id="difficultySelect" class="p-1 text-sm border border-[#A8CAD9] rounded-md max-w-xs">
         <option value="Easy">Easy</option>
         <option value="Medium">Medium</option>
@@ -225,7 +219,7 @@
             </div>
         </section>
 
-<!--         <footer class="text-center pt-8 border-t border-[#A8CAD9] mt-16">
+        <!-- <footer class="text-center pt-8 border-t border-[#A8CAD9] mt-16">
             <p class="text-[#366E8A]">Powered by Gemini API</p>
         </footer> -->
 
@@ -250,7 +244,7 @@
                 };
             }
 
-            const apiKey = "AIzaSyBs6AWaddP__wFKhDF7JYGRcFVdIbJd-vE";
+            const apiKey = "";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             try {
@@ -285,107 +279,113 @@
             }
         }
 
-        document.getElementById('generateQuestionBtn').addEventListener('click', async () => {
-            const subject = document.getElementById('subjectSelect').value;
-            const outputElement = document.getElementById('interviewQuestionOutput');
-            outputElement.innerHTML = 'Thinking...';
-            outputElement.classList.add('loading');
+document.getElementById('generateQuestionBtn').addEventListener('click', async () => {
+    const subject = document.getElementById('subjectInput').value.trim();
+    const topic = document.getElementById('topicInput').value.trim();
+    const difficulty = document.getElementById('difficultySelect').value;
+    const outputElement = document.getElementById('interviewQuestionOutput');
+    outputElement.innerHTML = 'Thinking...';
+    outputElement.classList.add('loading');
 
-            let prompt;
-            if (subject === "Aptitude") {
-                prompt = `Generate 5 multiple-choice questions for a technical interview at a service-based company (like TCS, Wipro, Accenture) for a B.Tech student on the topic of Quantitative Aptitude. Each question should have exactly 4 options. For each question, indicate the correct answer index (0-3). The questions should be clear and concise. Provide the output as a JSON array of objects, where each object has 'question', 'options' (an array of 4 strings), and 'correctAnswerIndex' (a number).`;
-            } else if (subject === "Verbal (Grammar)") {
-                prompt = `Generate 5 multiple-choice questions for a technical interview at a service-based company (like TCS, Wipro, Accenture) for a B.Tech student on the topic of English Grammar. Each question should have exactly 4 options. For each question, indicate the correct answer index (0-3). The questions should be clear and concise. Provide the output as a JSON array of objects, where each object has 'question', 'options' (an array of 4 strings), and 'correctAnswerIndex' (a number).`;
-            } else {
-                prompt = `Generate 5 multiple-choice questions for a technical interview at a service-based company for a B.Tech student on the topic of ${subject}. Each question should have exactly 4 options. For each question, indicate the correct answer index (0-3). The questions should be clear and concise. Provide the output as a JSON array of objects, where each object has 'question', 'options' (an array of 4 strings), and 'correctAnswerIndex' (a number).`;
-            }
+    if (!subject) {
+        outputElement.innerHTML = 'Please enter a subject.';
+        outputElement.classList.remove('loading');
+        return;
+    }
+    if (!topic) {
+        outputElement.innerHTML = 'Please enter a topic.';
+        outputElement.classList.remove('loading');
+        return;
+    }
 
-            const mcqSchema = {
-                type: "ARRAY",
-                items: {
-                    type: "OBJECT",
-                    properties: {
-                        "question": { "type": "STRING" },
-                        "options": {
-                            "type": "ARRAY",
-                            "items": { "type": "STRING" },
-                            "minItems": 4,
-                            "maxItems": 4
-                        },
-                        "correctAnswerIndex": { "type": "NUMBER" }
-                    },
-                    required: ["question", "options", "correctAnswerIndex"]
+    let prompt = `Generate 5 multiple-choice questions for a technical interview at a service-based company for a B.Tech student on the topic of ${topic} in the subject ${subject}. Each question should have exactly 4 options. For each question, indicate the correct answer index (0-3). The questions should be clear and concise. Provide the output as a JSON array of objects, where each object has 'question', 'options' (an array of 4 strings), and 'correctAnswerIndex' (a number). Difficulty level is ${difficulty}.`;
+
+    const mcqSchema = {
+        type: "ARRAY",
+        items: {
+            type: "OBJECT",
+            properties: {
+                "question": { "type": "STRING" },
+                "options": {
+                    "type": "ARRAY",
+                    "items": { "type": "STRING" },
+                    "minItems": 4,
+                    "maxItems": 4
                 },
-                minItems: 5,
-                maxItems: 5
-            };
+                "correctAnswerIndex": { "type": "NUMBER" }
+            },
+            required: ["question", "options", "correctAnswerIndex"]
+        },
+        minItems: 5,
+        maxItems: 5
+    };
 
-            const mcqData = await callGeminiAPI(prompt, 'interviewQuestionOutput', mcqSchema);
+    const mcqData = await callGeminiAPI(prompt, 'interviewQuestionOutput', mcqSchema);
 
-            if (mcqData && mcqData.length === 5) {
-                let mcqHtml = '';
-                mcqData.forEach((mcq, qIndex) => {
-                    mcqHtml += `
-                        <div class="mcq-question-container" data-correct-answer-index="${mcq.correctAnswerIndex}" data-question-index="${qIndex}">
-                            <p class="font-semibold text-left mb-3">Q${qIndex + 1}: ${mcq.question}</p>
-                            <div class="space-y-2 text-left mcq-options">
-                    `;
-                    mcq.options.forEach((option, oIndex) => {
-                        mcqHtml += `
-                                <label class="flex items-center">
-                                    <input type="radio" name="mcqOption_${qIndex}" value="${oIndex}" class="mr-2 text-[#366E8A] focus:ring-[#366E8A]">
-                                    <span>${option}</span>
-                                </label>
-                        `;
-                    });
-                    mcqHtml += `
-                            </div>
-                            <div id="mcqResult_${qIndex}" class="question-result"></div>
-                        </div>
-                    `;
-                });
-                mcqHtml += `<button id="submitAllAnswersBtn" class="ai-button mt-6 w-full">Submit All Answers</button>`;
-                outputElement.innerHTML = mcqHtml;
-                outputElement.classList.remove('loading');
-
-                document.getElementById('submitAllAnswersBtn').addEventListener('click', () => {
-                    let allCorrect = true;
-                    mcqData.forEach((mcq, qIndex) => {
-                        const selectedOption = document.querySelector(`input[name="mcqOption_${qIndex}"]:checked`);
-                        const questionResultDiv = document.getElementById(`mcqResult_${qIndex}`);
-                        questionResultDiv.style.display = 'block';
-
-                        if (selectedOption) {
-                            const userAnswerIndex = parseInt(selectedOption.value);
-                            const correctAnswerIndex = mcq.correctAnswerIndex;
-                            const correctAnswerText = mcq.options[correctAnswerIndex];
-
-                            if (userAnswerIndex === correctAnswerIndex) {
-                                questionResultDiv.innerHTML = 'Correct! 🎉';
-                                questionResultDiv.className = 'question-result correct';
-                            } else {
-                                questionResultDiv.innerHTML = `Incorrect. The correct answer was: <span class="font-bold">${correctAnswerText}</span>`;
-                                questionResultDiv.className = 'question-result incorrect';
-                                allCorrect = false;
-                            }
-                        } else {
-                            questionResultDiv.innerHTML = 'No answer selected.';
-                            questionResultDiv.className = 'question-result incorrect';
-                            allCorrect = false;
-                        }
-
-                        document.querySelectorAll(`input[name="mcqOption_${qIndex}"]`).forEach(radio => radio.disabled = true);
-                    });
-
-                    document.getElementById('submitAllAnswersBtn').disabled = true;
-                    document.getElementById('submitAllAnswersBtn').classList.add('opacity-50', 'cursor-not-allowed');
-                });
-
-            } else {
-                outputElement.innerHTML = 'Could not generate 5 questions. Please try again.';
-                outputElement.classList.remove('loading');
-            }
+    if (mcqData && mcqData.length === 5) {
+        let mcqHtml = '';
+        mcqData.forEach((mcq, qIndex) => {
+            mcqHtml += `
+                <div class="mcq-question-container" data-correct-answer-index="${mcq.correctAnswerIndex}" data-question-index="${qIndex}">
+                    <p class="font-semibold text-left mb-3">Q${qIndex + 1}: ${mcq.question}</p>
+                    <div class="space-y-2 text-left mcq-options">
+            `;
+            mcq.options.forEach((option, oIndex) => {
+                mcqHtml += `
+                        <label class="flex items-center">
+                            <input type="radio" name="mcqOption_${qIndex}" value="${oIndex}" class="mr-2 text-[#366E8A] focus:ring-[#366E8A]">
+                            <span>${option}</span>
+                        </label>
+                `;
+            });
+            mcqHtml += `
+                    </div>
+                    <div id="mcqResult_${qIndex}" class="question-result"></div>
+                </div>
+            `;
         });
+        mcqHtml += `<button id="submitAllAnswersBtn" class="ai-button mt-6 w-full">Submit All Answers</button>`;
+        outputElement.innerHTML = mcqHtml;
+        outputElement.classList.remove('loading');
+
+        document.getElementById('submitAllAnswersBtn').addEventListener('click', () => {
+            let allCorrect = true;
+            mcqData.forEach((mcq, qIndex) => {
+                const selectedOption = document.querySelector(`input[name="mcqOption_${qIndex}"]:checked`);
+                const questionResultDiv = document.getElementById(`mcqResult_${qIndex}`);
+                questionResultDiv.style.display = 'block';
+
+                if (selectedOption) {
+                    const userAnswerIndex = parseInt(selectedOption.value);
+                    const correctAnswerIndex = mcq.correctAnswerIndex;
+                    const correctAnswerText = mcq.options[correctAnswerIndex];
+
+                    if (userAnswerIndex === correctAnswerIndex) {
+                        questionResultDiv.innerHTML = 'Correct! 🎉';
+                        questionResultDiv.className = 'question-result correct';
+                    } else {
+                        questionResultDiv.innerHTML = `Incorrect. The correct answer was: <span class="font-bold">${correctAnswerText}</span>`;
+                        questionResultDiv.className = 'question-result incorrect';
+                        allCorrect = false;
+                    }
+                } else {
+                    questionResultDiv.innerHTML = 'No answer selected.';
+                    questionResultDiv.className = 'question-result incorrect';
+                    allCorrect = false;
+                }
+
+                document.querySelectorAll(`input[name="mcqOption_${qIndex}"]`).forEach(radio => radio.disabled = true);
+            });
+
+            document.getElementById('submitAllAnswersBtn').disabled = true;
+            document.getElementById('submitAllAnswersBtn').classList.add('opacity-50', 'cursor-not-allowed');
+        });
+
+    } else {
+        outputElement.innerHTML = 'Could not generate 5 questions. Please try again.';
+        outputElement.classList.remove('loading');
+    }
+});
 
         document.getElementById('getStudyTipBtn').addEventListener('click', () => {
             const challenge = document.getElementById('studyChallengeInput').value;
